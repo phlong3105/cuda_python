@@ -340,6 +340,6 @@ class Device:
         handle_return(runtime.cudaDeviceSynchronize())
 
     @precondition(_check_context_initialized)
-    def create_graph(self) -> GraphBuilder:
+    def build_graph(self) -> GraphBuilder:
         private_stream = self.create_stream()
         return GraphBuilder._init(stream=private_stream)

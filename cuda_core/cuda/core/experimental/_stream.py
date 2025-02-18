@@ -294,7 +294,7 @@ class Stream:
 
         return Stream._init(obj=_stream_holder())
 
-    def create_graph(self) -> GraphBuilder:
+    def build_graph(self) -> GraphBuilder:
         return GraphBuilder._init(stream=self)
 
 

@@ -4,11 +4,8 @@
 
 from __future__ import annotations
 
-import os
-import warnings
-import weakref
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple
 
 if TYPE_CHECKING:
     from cuda.core.experimental._stream import Stream
@@ -17,8 +14,7 @@ from cuda.core.experimental._utils import driver, handle_return, precondition
 
 @dataclass
 class DebugPrintOptions:
-    """
-    """
+    """ """
 
     VERBOSE: bool = False
     RUNTIME_TYPES: bool = False
@@ -60,7 +56,7 @@ class GraphBuilder:
         #       If from Stream, then we can't
         self._stream = stream
         self._capturing = False
-        self._is_root = is_root # TODO: Is this info needed?
+        self._is_root = is_root  # TODO: Is this info needed?
         return self
 
     def _check_capture_stream_provided(self, *args, **kwargs):
@@ -101,8 +97,10 @@ class GraphBuilder:
         elif capture_status == driver.CUstreamCaptureStatus.CU_STREAM_CAPTURE_STATUS_ACTIVE:
             return True
         elif capture_status == driver.CUstreamCaptureStatus.CU_STREAM_CAPTURE_STATUS_INVALIDATED:
-            raise RuntimeError("Stream is part of a capture sequence that has been invalidated, but "
-                               "not terminated. The capture sequence must be terminated with self.`().")
+            raise RuntimeError(
+                "Stream is part of a capture sequence that has been invalidated, but "
+                "not terminated. The capture sequence must be terminated with self.`()."
+            )
         else:
             raise NotImplementedError(f"Unsupported capture stuse type received: {capture_status}")
 
@@ -124,30 +122,30 @@ class GraphBuilder:
 
         handle_return(driver.cuGraphDebugDotPrint(self._graph, path, options_value))
 
-    def split(self, count) -> Tuple[Graph, ...]:
+    def fork(self, count) -> Tuple[Graph, ...]:
         if count <= 1:
-            raise ValueError(f"Invalid split count: expecting >= 2, got {count}")
+            raise ValueError(f"Invalid fork count: expecting >= 2, got {count}")
 
         # 1. Record an event on our stream
         event = self._stream.record()
 
         # TODO: Steps 2,3,4 can be combined under a single loop
 
-        # 2. Create a streams for each of the new splits
-        # TODO: Optimization where one of the split stream is allowed to use
+        # 2. Create a streams for each of the new forks
+        # TODO: Optimization where one of the fork stream is allowed to use
         # TODO: Should use the same stream options as initial stream??
-        split_stream = [self._stream.device.create_stream() for i in range(count)]
+        fork_stream = [self._stream.device.create_stream() for i in range(count)]
 
         # 3. Have each new stream wait on our singular event
-        for stream in split_stream:
+        for stream in fork_stream:
             stream.wait(event)
 
         # 4. Discard the event
         # TODO: Is this actually allowed when using with a graph? Surely, since it just needs to create an edge for us... right?
         event.close()
 
-        # 5. Create new graph builders for each new stream split
-        return [GraphBuilder._init(stream=stream, is_root=False) for stream in split_stream]
+        # 5. Create new graph builders for each new stream fork
+        return [GraphBuilder._init(stream=stream, is_root=False) for stream in fork_stream]
 
     def join(self, *graph_builders):
         if len(graph_builders) < 1:
@@ -158,6 +156,18 @@ class GraphBuilder:
             # TODO: Can we close each of those new streams? Do we need weakref?
             graph.close()
 
+    def create_conditional_handle(self, default_value=None):
+        pass
+
+    def if_cond(self, handle):
+        pass
+
+    def if_else(self, handle):
+        pass
+
+    def switch(self, handle, count):
+        pass
+
     def close(self):
         if self._capturing:
             raise RuntimeError("Trying to close a graph builder who is still capturing")
@@ -166,8 +176,7 @@ class GraphBuilder:
 
 
 class Graph:
-    """
-    """
+    """ """
 
     def __init__(self):
         raise RuntimeError("directly constructing a Graph instance is not supported")

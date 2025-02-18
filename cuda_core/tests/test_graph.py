@@ -6,16 +6,16 @@
 # this software and related documentation outside the terms of the EULA
 # is strictly prohibited.
 
-import pytest
 
 from cuda.core.experimental import Device, LaunchConfig, Program, ProgramOptions, launch
+
 # from cuda.core.experimental import Device, Stream, StreamOptions
 # from cuda.core.experimental._event import Event
 # from cuda.core.experimental._stream import LEGACY_DEFAULT_STREAM, PER_THREAD_DEFAULT_STREAM, default_stream
 
 
 def test_graph_is_capture_alive(init_cuda):
-    graph_builder = Device().create_graph()
+    graph_builder = Device().build_graph()
     assert graph_builder.is_capture_active() is False
     graph_builder.begin_capture()
     assert graph_builder.is_capture_active() is True
@@ -24,7 +24,6 @@ def test_graph_is_capture_alive(init_cuda):
 
 
 def test_graph_straight(init_cuda):
-
     # TODO: Maybe share these between tests?
     code = """
     __global__ void empty_kernel() {}
@@ -35,9 +34,8 @@ def test_graph_straight(init_cuda):
     mod = prog.compile("cubin", name_expressions=("empty_kernel",))
     empty_kernel = mod.get_kernel("empty_kernel")
 
-
     # Test start
-    graph_builder = Device().create_graph()
+    graph_builder = Device().build_graph()
     config = LaunchConfig(grid=1, block=1, stream=graph_builder.legacy_stream_capture)
 
     assert graph_builder.is_capture_active() is False
@@ -48,8 +46,7 @@ def test_graph_straight(init_cuda):
     graph_builder.end_capture()
 
 
-def test_graph_split_join(init_cuda):
-
+def test_graph_fork_join(init_cuda):
     # TODO: Maybe share these between tests?
     code = """
     __global__ void empty_kernel() {}
@@ -60,14 +57,13 @@ def test_graph_split_join(init_cuda):
     mod = prog.compile("cubin", name_expressions=("empty_kernel",))
     empty_kernel = mod.get_kernel("empty_kernel")
 
-
     # Test start
-    graph_builder = Device().create_graph()
+    graph_builder = Device().build_graph()
     assert graph_builder.is_capture_active() is False
     graph_builder.begin_capture()
     launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.legacy_stream_capture})
 
-    left, right = graph_builder.split(2)
+    left, right = graph_builder.fork(2)
     launch(empty_kernel, {"grid": 1, "block": 1, "stream": left.legacy_stream_capture})
     launch(empty_kernel, {"grid": 1, "block": 1, "stream": left.legacy_stream_capture})
     launch(empty_kernel, {"grid": 1, "block": 1, "stream": right.legacy_stream_capture})
