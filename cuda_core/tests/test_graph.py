@@ -36,13 +36,13 @@ def test_graph_straight(init_cuda):
 
     # Test start
     graph_builder = Device().build_graph()
-    config = LaunchConfig(grid=1, block=1, stream=graph_builder.legacy_stream_capture)
+    config = LaunchConfig(grid=1, block=1, stream=graph_builder.stream)
 
     assert graph_builder.is_capture_active() is False
     graph_builder.begin_capture()
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.legacy_stream_capture})
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.legacy_stream_capture})
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.legacy_stream_capture})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.stream})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.stream})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.stream})
     graph_builder.end_capture()
 
 
@@ -61,16 +61,16 @@ def test_graph_fork_join(init_cuda):
     graph_builder = Device().build_graph()
     assert graph_builder.is_capture_active() is False
     graph_builder.begin_capture()
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.legacy_stream_capture})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.stream})
 
     left, right = graph_builder.fork(2)
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": left.legacy_stream_capture})
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": left.legacy_stream_capture})
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": right.legacy_stream_capture})
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": right.legacy_stream_capture})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": left.stream})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": left.stream})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": right.stream})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": right.stream})
     graph_builder.join(left, right)
 
-    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.legacy_stream_capture})
+    launch(empty_kernel, {"grid": 1, "block": 1, "stream": graph_builder.stream})
     graph_builder.end_capture()
 
     graph_builder.debug_dot_print(b"vlad.dot")

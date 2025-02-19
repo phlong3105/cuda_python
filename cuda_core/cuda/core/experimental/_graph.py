@@ -86,7 +86,7 @@ class GraphBuilder:
             raise RuntimeError("Tried to use a stream capture operation on a graph builder without a stream")
 
     @property
-    def legacy_stream_capture(self) -> Stream:
+    def stream(self) -> Stream:
         return self._mnff.stream
 
     @property
@@ -178,7 +178,7 @@ class GraphBuilder:
                 raise ValueError("The primary graph builder should not be joined. Others builders should instead be joined onto it.")
 
         for graph in graph_builders:
-            self._mnff.stream.wait(graph.legacy_stream_capture)
+            self._mnff.stream.wait(graph.stream)
             # TODO: Do we close them now or let weakref handle it during garbage collection?
             #       This is a perf question, is there a good default?
             graph.close()
